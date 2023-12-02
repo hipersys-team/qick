@@ -7,6 +7,68 @@ import json
 import base64
 from collections import OrderedDict
 
+def to_int(val, scale, quantize=1, parname=None):
+    """Convert a parameter value from user units to ASM units.
+    Nromally this means converting from float to int.
+    For the v2 tProcessor this can also convert QickSweep to QickSweepRaw.
+
+    Parameters
+    ----------
+    val : float or QickSweep
+        parameter value or sweep range
+    scale : float
+        conversion factor
+    quantize : int
+        rounding step for ASM value
+    parname : str
+        parameter type - only for sweeps
+
+    Returns
+    -------
+    int or QickSweepRaw
+        ASM value
+    """
+    if hasattr(val, 'to_int'):
+        return val.to_int(scale, parname=parname, quantize=quantize)
+    else:
+        return int(quantize * np.round(val*scale/quantize))
+
+def check_bytes(val, length):
+    """Test if a signed int will fit in the specified number of bytes.
+
+    Parameters
+    ----------
+    val : int
+        value to test
+    length : int
+        number of bytes
+
+    Returns
+    -------
+    bool
+        True if value will fit, False otherwise
+    """
+    try:
+        int(val).to_bytes(length=length, byteorder='little', signed=True)
+        return True
+    except OverflowError:
+        return False
+
+def cosine(length=100, maxv=30000):
+    """
+    Create a numpy array containing a cosine shaped envelope function
+    
+    :param length: Length of array
+    :type length: int
+    :param maxv: Maximum amplitude of cosine flattop function
+    :type maxv: float
+    :return: Numpy array containing a cosine flattop function
+    :rtype: array
+    """
+    x = np.linspace(0,2*np.pi,length)
+    y = maxv*(1-np.cos(x))/2
+    return y
+
 
 def gauss(mu=0, si=25, length=100, maxv=30000):
     """
@@ -96,9 +158,33 @@ class NpEncoder(json.JSONEncoder):
         return super().default(obj)
 
 def progs2json(proglist):
+    """Dump QICK programs to a JSON string.
+
+    Parameters
+    ----------
+    proglist : list of dict
+        A list of program dictionaries to dump.
+
+    Returns
+    -------
+    str
+        A JSON string.
+    """
     return json.dumps(proglist, cls=NpEncoder)
 
 def json2progs(s):
+    """Read QICK programs from JSON.
+
+    Parameters
+    ----------
+    s : file-like object or string
+        A JSON file or JSON string.
+
+    Returns
+    -------
+    list of dict
+        A list of program dictionaries.
+    """
     if hasattr(s, 'read'):
         # input is file-like, we should use json.load()
         # be sure to read dicts back in order (only matters for Python <3.7)

@@ -23,7 +23,7 @@ This guide will show you how to set up QICK after configuring your computer and 
     * You can download the Win32DiskImager utility here: https://sourceforge.net/projects/win32diskimager/
 * A router (this guide used a standard Cisco RV160 VPN Router which is available for purchase at www.amazon.com). The router used in this guide has 4 LAN ports. For instance, in a typical qubit control setup you can connect one LAN port to your personal computer, a second LAN port to your ZCU216, and a third point to an Ethernet switch (for example the NETGEAR 24-Port Gigabit Ethernet Unmanaged Switch (JGS524) which is available for purchase at www.amazon.com). That Ethernet switch can place 24 more devices (such as external trigger sources, local oscillators, programmable attenuators or other lab equipment) on the router's subnet, making them accessible to your personal computer. 
 * Two Ethernet cables that you will use to attach 1) your ZCU216 board and 2) your personal computer to the router.
-* A micro SD card reader (such as IOGEAR SuperSpeed USB 3.0 SD/Micro SD Card Reader/Writer (GFR304SD) which is available for purchase at www.amazon.com). 
+* A micro SD card reader (such as IOGEAR SuperSpeed USB 3.0 SD/Micro SD Card Reader/Writer (GFR304SD) which is available for purchase at www.amazon.com). This card reader should directly read micro SD cards, to avoid confusion with SD card adapters.
 * A torque wrench for tightening SMA cables
 
 ### Flashing the PYNQ 2.7.0 image onto your micro SD card
@@ -87,6 +87,21 @@ It is only after you initialize the QICK firmware that the FPGA has been loaded 
 * Now, connect your personal computer via Ethernet to a LAN port of the router. 
 * Look at the list of devices found by your router. You should see two devices; your PC and your ZCU216 (id `pynq`). One easy way of doing this on a Windows PC is to download the `Advanced IP scanner` tool (https://www.advanced-ip-scanner.com/). Take note of the IP address that was assigned to the ZCU216.
 
+### Finding your RFSOC via point-to-point Ethernet connection
+* The IP address of the RFSoC can also be directly obtained via point-to-point Ethernet connection. 
+* Connect a PC to the board via an Ethernet cable. If your PC doesn't have an Ethernet port, you can use an USB-to-Ethernet adapter, which can be purchased from www.amazon.com.
+* Change the static IP address of your PC to be in the `192.168.2.x` subnet
+* Connect to the board by navigating to the RFSoC's default static IP address `192.168.2.99` on your browser. This should open Jupyter. The username and password are by default `xilinx` and `xilinx`, respectively. 
+
+
+### Finding your RFSOC via Serial connection
+* The IP address of the RFSoC can also be directly obtained via serial connection. 
+* Connect a PC to the board via the micro USB port. Under the Device Manager under COM ports the RFSoC should show up as three COM connections. In our experience the port you should use is the first of those three.
+* Boot the RFSoC board. It is important to boot the board after the micro USB has been connected between the board and your PC.
+* Using PuTTY, select "Serial" connection type, enter the port number (e.g. `COM4`), and the serial speed, which by default is `115200`.
+* This will open a terminal that directly connects to the RFSoC CPU. `ifconfig` should give the assigned IP address.
+* If connection problems persist, the default gateway may not be set; this can be checked with `ip route`. There should be an IP address marked as `default`. If this is not present, a default must be set using `sudo ip route add default via xxx.xxx.xxx.1`, replacing the IP address with the local network address.
+* Finally, the RFSoC may need to be configured to properly access the internet. Open `/etc/resolv.conf` in a text editor such as `vim` or `nano`, and ensure that it contains `nameserver 8.8.8.8`, `options eth0`. Note that `resolv.conf` may be re-generated when the board is power-cycled.
 
 ### Connecting to your RFSOC via Jupyter and via SSH
 
@@ -99,11 +114,49 @@ It is only after you initialize the QICK firmware that the FPGA has been loaded 
  <img src="quick-start-guide-pics/pynqstartup.PNG" alt="PYNQ startup">
 </p>
 
-* You can see that there are a few demo Jupyter notebooks already loaded onto the RFSOC which you can feel free to explore. But now let's install the QICK software onto the RFSOC.
+* You can see that there are a few demo Jupyter notebooks already loaded onto the RFSOC which you can feel free to explore. But now let's connect to the RFSOC via SSH, where you will have more flexibility and control. For instance, only after you have established an SSH connection can you copy the `qick` repo onto the RFSOC and do the upcoming QICK loopback demo. 
+
+#### Via SSH
+
+* To connect via SSH, open the PuTTY application and input the IP address assigned to the RFSOC (`192.168.1.146`) as below: 
+<p align="center">
+ <img src="quick-start-guide-pics/putty1.PNG" alt="Using PuTTY (1)">
+</p>
+
+* Click `Open`. You will see the following login screen on a new terminal. The username and password for the ZCU111 are by default `xilinx` and `xilinx`, respectively. 
+
+<p align="center">
+ <img src="quick-start-guide-pics/putty2.PNG" alt="Using PuTTY (2)">
+</p>
+
+* After successfully logging in you will see a Linux terminal. You have now remotely logged on to the RFSOC. 
+
+<p align="center">
+ <img src="quick-start-guide-pics/putty3.PNG" alt="Using PuTTY (3)">
+</p>
+
 
 ### Copy the QICK tools onto your RFSOC
 
 * Use Github Desktop to clone the `qick` repo onto your personal computer (Google around for resources if you are not sure how to do this). 
+* Now, copy the `pscp.exe` into the same directory as your cloned `qick` repo, as below: 
+
+<p align="center">
+ <img src="quick-start-guide-pics/pscpfolderstructure.PNG" alt="Folder structure required for PSCP">
+</p>
+
+* Open the Command Prompt application in Windows and, after navigating to the directory containing your cloned `qick` repo, type in the following command (substituting the IP address that was assigned to your RFSOC):
+
+<p align="center">
+ <img src="quick-start-guide-pics/pushingdatatotheboard.PNG" alt="Pushing data to the RFSOC with PSCP">
+</p>
+
+* This copied the `qick` repository into the `jupyter_notebooks` folder in the `/home/xilinx/` directory of the RFSOC. 
+* Your Jupyter notebook browser has now updated to include the `qick` repository, as shown below: 
+
+<p align="center">
+ <img src="quick-start-guide-pics/jupyternotebook1.PNG" alt="Jupyter notebook main folder">
+</p>
 
 ### Installing the `qick` Python package
 
@@ -123,6 +176,13 @@ This will install the qick Python package.
 
 ### Copy data off of your RFSOC and onto your personal computer
 
-* Let's say that you have created a `quick_start_demo` directory with your work and you want a local copy of the entire directory (for example, you exported your data to `.png` plots that are within the `quick_start_demo` directory on the RFSOC, and you want to move those plots back to your personal computer). To do this, you can either store the data in a separate GitHub repo which you can then push back to GitHub so it is available for your download onto your local PC via your browser, or you can use the standard Linux `scp` command to securely copy data from the RFSOC back to the local PC (note that you will have to install SSH on your local PC in order to do this).
+* Let's say that you have created a `quick_start_demo` directory with your work and you want a local copy of the entire directory (for example, you exported your data to `.png` plots that are within the `quick_start_demo` directory on the RFSOC, and you want to move those plots back to your personal computer). To do this, you can either store the data in a separate GitHub repo which you can then push back to GitHub so it is available for your download onto your local PC via your browser, or you can use the standard Linux `scp` command to securely copy data from the RFSOC back to the local PC.
+* Open the Command Prompt application in Windows and, after navigating to your local directory containing your `pscp.exe` executable, type in the following command (substituting the IP address that was assigned to your RFSOC):
+ 
+<p align="center">
+ <img src="quick-start-guide-pics/pullingdataofftheboard.PNG" alt="Pulling data off the RFSOC with PSCP">
+</p>
+
+* Now the `quick_start_demo` directory has been copied to your local directory which contains your `pscp.exe` executable. 
 
 ***Hopefully this guide was a helpful introduction to QICK!***
