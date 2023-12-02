@@ -27,6 +27,10 @@ General-purpose software for quantum experiments
 #############################
 * `Efthymiou, S. et al. Qibolab: an open-source hybrid quantum operating system (2023) <https://arxiv.org/abs/2308.06313>`_.
 
+Photonic computing with mach-zehnder modulators and photodetectors
+#############################
+* `Zhong, Z. et al. Lightning: A Reconfigurable Photonic-Electronic SmartNIC for Fast and Energy-Efficient Inference (2023) <https://dl.acm.org/doi/abs/10.1145/3603269.3604821>`_.
+
 QICK system
 #############################
 * `Ding, C. et al. Experimental advances with the QICK (Quantum Instrumentation Control Kit) for superconducting quantum hardware. (2023) <https://arxiv.org/abs/2311.17171>`_.
